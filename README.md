@@ -1,8 +1,6 @@
 # Bukowski
 
-TODO: Delete this and the text below, and describe your gem
-
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/bukowski`. To experiment with that code, run `bin/console` for an interactive prompt.
+Bukowski is a lambda-calculus interpreter written in Ruby. It converts labmda-calculus to SKI combinators and then executes the SKI combinators.
 
 ## Installation
 
@@ -32,7 +30,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/bukowski. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/[USERNAME]/bukowski/blob/main/CODE_OF_CONDUCT.md).
+Bug reports and pull requests are welcome on GitHub at https://github.com/philcrissman/bukowski. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/philcrissman/bukowski/blob/main/CODE_OF_CONDUCT.md).
 
 ## License
 

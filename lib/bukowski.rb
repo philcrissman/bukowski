@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "bukowski/version"
+require_relative "bukowski/tokenizer"
 
 module Bukowski
   class Error < StandardError; end
