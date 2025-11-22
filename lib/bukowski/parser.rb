@@ -1,7 +1,21 @@
 module Bukowski
-  Var = Struct.new(:name)
-  Abs = Struct.new(:param, :body)
-  App = Struct.new(:func, :arg)
+  Var = Struct.new(:name) do
+    def to_s
+      name
+    end
+  end
+  Abs = Struct.new(:param, :body) do
+    def to_s
+      "λ#{param}.#{body}"
+    end
+  end
+  App = Struct.new(:func, :arg) do
+    def to_s
+      func_str = func.is_a?(Abs) ? "(#{func})" : func.to_s
+      arg_str = arg.is_a?(Abs) ? "(#{arg})" : arg.to_s
+      "#{func_str} #{arg_str}"
+    end
+  end
 
   class Parser
     def initialize(tokens)
