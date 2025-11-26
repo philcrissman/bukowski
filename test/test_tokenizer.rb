@@ -32,5 +32,32 @@ class TestTokenizer < Minitest::Test
       tokens
     )
   end
+
+  def test_integers 
+    input = '42'
+    tokens = Tokenizer.new(input).tokenize.map(&:to_s)
+    assert_equal(
+      %w[NUM(42) EOF],
+      tokens
+    )
+  end
+
+  def test_reserved_words
+    input = 'if true x y'
+    tokens = Tokenizer.new(input).tokenize.map(&:to_s)
+    assert_equal(
+      %w[IF TRUE VAR(x) VAR(y) EOF],
+      tokens
+    )
+  end
+
+  def test_operations
+    input = '(+ 3 2)'
+    tokens = Tokenizer.new(input).tokenize.map(&:to_s)
+    assert_equal(
+      %w[LPAREN OP(+) NUM(3) NUM(2) RPAREN EOF],
+      tokens
+    )
+  end
 end
 

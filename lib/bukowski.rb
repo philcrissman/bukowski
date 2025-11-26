@@ -8,8 +8,10 @@ require_relative "bukowski/repl"
 
 module Bukowski
 
-  repl = Bukowski::REPL.new
-  repl.run
+  if __FILE__ == $PROGRAM_NAME
+    repl = Bukowski::REPL.new
+    repl.run
+  end
 
   class Error < StandardError; end
   # Your code goes here...

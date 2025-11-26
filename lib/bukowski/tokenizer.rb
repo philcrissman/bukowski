@@ -54,9 +54,29 @@ module Bukowski
       when ')'
         advance
         Token.new(:RPAREN)
+      when '0'..'9'
+        num = String.new
+        while !eof? && current_char =~ /[0-9]/
+          num << current_char
+          advance
+        end
+        Token.new(:NUM, num.to_i)
       when 'a'..'z', 'A'..'Z'
+        word = String.new
+        while !eof? && current_char =~ /[a-zA-Z]/
+          word << current_char
+          advance
+        end
+
+        case word
+        when 'true'  then Token.new(:TRUE)
+        when 'false' then Token.new(:FALSE)
+        when 'if'    then Token.new(:IF)
+        else Token.new(:VAR, word)
+        end
+      when '+', '-', '*', '/', '=', '<', '>'
         advance
-        Token.new(:VAR, c)
+        Token.new(:OP, c)
       else
         raise "Unexpected character: #{c.inspect}"
       end
