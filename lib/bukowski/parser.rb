@@ -4,6 +4,11 @@ module Bukowski
       name
     end
   end
+  Num = Struct.new(:value) do
+    def to_s
+      value.to_s
+    end
+  end
   Abs = Struct.new(:param, :body) do
     def to_s
       "λ#{param}.#{body}"
@@ -62,8 +67,8 @@ module Bukowski
 
     def parse_application
       left = parse_atom
-      
-      while current_token.type == :VAR || current_token.type == :LPAREN
+
+      while [:VAR, :OP, :NUM, :LPAREN, :TRUE, :FALSE, :IF].include?(current_token.type)
         right = parse_atom
         left = App.new(left, right)
       end
@@ -77,6 +82,23 @@ module Bukowski
         var = Var.new(current_token.value)
         advance
         var
+      when :OP
+        var = Var.new(current_token.value)
+        advance
+        var
+      when :NUM
+        num = Num.new(current_token.value)
+        advance
+        num
+      when :TRUE
+        advance
+        Var.new('true')
+      when :FALSE
+        advance
+        Var.new('false')
+      when :IF
+        advance
+        Var.new('if')
       when :LPAREN
         advance
         expr = parse_expr
