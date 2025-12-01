@@ -15,6 +15,9 @@ module Bukowski
         when Num
           # Numbers stay as numbers
           SKNum.new(expr.value)
+        when Str
+          # Strings stay as strings
+          SKStr.new(expr.value)
         when App
           # Applications: translate both sides
           SKApp.new(translate(expr.func), translate(expr.arg))
@@ -43,6 +46,9 @@ module Bukowski
         when Num
           # T[\x.n] = K n (numbers don't contain variables)
           SKApp.new(K.new, SKNum.new(body.value))
+        when Str
+          # T[\x.s] = K s (strings don't contain variables)
+          SKApp.new(K.new, SKStr.new(body.value))
         when Abs
           # T[\x.\y.E] = T[\x.T[\y.E]]
           # First translate the inner abstraction
@@ -97,7 +103,7 @@ module Bukowski
         case expr
         when SKVar
           expr.name == var_name
-        when SKNum, S, K, I
+        when SKNum, SKStr, S, K, I
           false
         when SKApp
           contains_var?(expr.func, var_name) || contains_var?(expr.arg, var_name)
@@ -115,7 +121,7 @@ module Bukowski
           else
             SKApp.new(K.new, expr)
           end
-        when SKNum, S, K, I
+        when SKNum, SKStr, S, K, I
           SKApp.new(K.new, expr)
         when SKApp
           left = abstract_sk_expr(param, expr.func)

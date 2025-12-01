@@ -1,0 +1,97 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative '../lib/bukowski/tokenizer'
+require_relative '../lib/bukowski/parser'
+require_relative '../lib/bukowski/cached_sk_evaluator'
+require_relative '../lib/bukowski/repl'
+
+module Bukowski
+  class Runner
+    def self.run(args)
+      if args.empty?
+        # Start REPL
+        REPL.new.run
+      else
+        # Execute file
+        execute_file(args[0])
+      end
+    end
+
+    def self.execute_file(filename)
+      unless File.exist?(filename)
+        puts "Error: File '#{filename}' not found"
+        exit 1
+      end
+
+      lines = File.readlines(filename)
+
+      begin
+        evaluator = CachedSKEvaluator.new
+        expressions = []
+
+        # Parse line by line
+        # Multi-line expressions need parentheses for grouping
+        buffer = ""
+        paren_depth = 0
+
+        lines.each do |line|
+          # Track parenthesis depth to handle multi-line expressions
+          line.chars.each do |char|
+            paren_depth += 1 if char == '('
+            paren_depth -= 1 if char == ')'
+          end
+
+          buffer += line
+
+          # Expression is complete when parens are balanced
+          if paren_depth == 0
+            stripped = buffer.strip
+            unless stripped.empty? || stripped.start_with?('#')
+              tokens = Tokenizer.new(buffer).tokenize
+              ast = Parser.new(tokens).parse
+              expressions << ast
+            end
+            buffer = ""
+          end
+        end
+
+        # Handle any remaining buffer (incomplete expression)
+        unless buffer.strip.empty?
+          tokens = Tokenizer.new(buffer).tokenize
+          ast = Parser.new(tokens).parse
+          expressions << ast
+        end
+
+        if expressions.empty?
+          exit 0
+        end
+
+        results = []
+        expressions.each do |expr|
+          results << evaluator.evaluate(expr)
+        end
+
+        # Print only the final result
+        final_result = results.last
+
+        # Pretty print Church booleans in SK form
+        if final_result.is_a?(SK::K)
+          puts "true"
+        elsif final_result.is_a?(SK::SKApp) &&
+              final_result.func.is_a?(SK::K) &&
+              final_result.arg.is_a?(SK::I)
+          puts "false"
+        else
+          puts final_result
+        end
+      rescue => e
+        puts "Error: #{e.message}"
+        puts e.backtrace if ENV['DEBUG']
+        exit 1
+      end
+    end
+  end
+end
+
+Bukowski::Runner.run(ARGV)

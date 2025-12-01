@@ -1,0 +1,28 @@
+# Test Stage 1 features: %, floats, strings, let bindings
+
+# Test modulo operator
+% 10 3
+
+# Test float addition
++ 3.14 2.86
+
+# Test float multiplication
+* 2.5 4.0
+
+# Test string literals
+"hello world"
+
+# Test let bindings
+let x = 5 in + x 10
+
+# Test nested let bindings
+let a = 100 in let b = 50 in - a b
+
+# Test let with modulo
+let n = 17 in % n 5
+
+# Test let with floats
+let pi = 3.14159 in let r = 10.0 in * pi (* r r)
+
+# Test complex expression with all features
+let x = 42 in let y = 8 in let z = % x y in + z 100

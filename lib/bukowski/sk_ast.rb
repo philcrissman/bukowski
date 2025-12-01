@@ -77,6 +77,17 @@ module Bukowski
       end
     end
 
+    # String literal in SK calculus (primitive)
+    SKStr = Struct.new(:value) do
+      def to_s
+        "\"#{value}\""
+      end
+
+      def inspect
+        "#<SKStr #{value}>"
+      end
+    end
+
     # Variable in SK calculus (for operators and free variables)
     SKVar = Struct.new(:name) do
       def to_s

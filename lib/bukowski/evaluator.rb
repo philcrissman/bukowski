@@ -51,6 +51,8 @@ module Bukowski
         end
       when Num
         expr
+      when Str
+        expr
       when Abs
         expr
       when App
@@ -59,7 +61,7 @@ module Bukowski
 
         case func
         when Var
-          if ['+', '-', '*', '/', '=', '<', '>'].include?(func.name)
+          if ['+', '-', '*', '/', '%', '=', '<', '>'].include?(func.name)
             # For primitives, we need to evaluate the arg
             PartialOp.new(func.name, evaluate(expr.arg))
           else
@@ -87,6 +89,9 @@ module Bukowski
         body.name == param ? arg : body
       when Num
         # Numbers don't contain variables, return unchanged
+        body
+      when Str
+        # Strings don't contain variables, return unchanged
         body
       when Abs
         if body.param == param
@@ -118,6 +123,8 @@ module Bukowski
         Num.new(a_val * b_val)
       when '/'
         Num.new(a_val / b_val)
+      when '%'
+        Num.new(a_val % b_val)
       when '=', '>', '<'
         # Comparison operations return Church booleans
         result = case op

@@ -60,7 +60,24 @@ module Bukowski
           num << current_char
           advance
         end
-        Token.new(:NUM, num.to_i)
+        # Check for decimal point (float)
+        if !eof? && current_char == '.'
+          # Look ahead - only treat as decimal if followed by digit
+          if @pos + 1 < @input.size && @input[@pos + 1] =~ /[0-9]/
+            num << current_char
+            advance
+            while !eof? && current_char =~ /[0-9]/
+              num << current_char
+              advance
+            end
+            Token.new(:NUM, num.to_f)
+          else
+            # Not a decimal, just return integer
+            Token.new(:NUM, num.to_i)
+          end
+        else
+          Token.new(:NUM, num.to_i)
+        end
       when 'a'..'z', 'A'..'Z'
         word = String.new
         while !eof? && current_char =~ /[a-zA-Z]/
@@ -72,18 +89,56 @@ module Bukowski
         when 'true'  then Token.new(:TRUE)
         when 'false' then Token.new(:FALSE)
         when 'if'    then Token.new(:IF)
+        when 'let'   then Token.new(:LET)
+        when 'in'    then Token.new(:IN)
         else Token.new(:VAR, word)
         end
-      when '+', '-', '*', '/', '=', '<', '>'
+      when '+', '-', '*', '/', '%', '=', '<', '>'
         advance
         Token.new(:OP, c)
+      when '"'
+        # String literal
+        advance  # Skip opening quote
+        str = String.new
+        while !eof? && current_char != '"'
+          if current_char == '\\'
+            # Handle escape sequences
+            advance
+            unless eof?
+              case current_char
+              when 'n' then str << "\n"
+              when 't' then str << "\t"
+              when 'r' then str << "\r"
+              when '\\' then str << "\\"
+              when '"' then str << "\""
+              else str << current_char
+              end
+              advance
+            end
+          else
+            str << current_char
+            advance
+          end
+        end
+        advance if !eof?  # Skip closing quote
+        Token.new(:STR, str)
       else
         raise "Unexpected character: #{c.inspect}"
       end
     end
 
     def skip_whitespace
-      advance while !eof? && current_char =~ /\s/
+      while !eof?
+        if current_char =~ /\s/
+          advance
+        elsif current_char == '#'
+          # Skip comment until end of line
+          advance while !eof? && current_char != "\n"
+          advance if !eof?  # Skip the newline too
+        else
+          break
+        end
+      end
     end
   end
 end

@@ -1,0 +1,5 @@
+# Identity function test
+# This demonstrates the simplest lambda: \x.x
+# Translates to the I combinator in SK
+
+(\x.x) 42

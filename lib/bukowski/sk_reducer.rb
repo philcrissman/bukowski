@@ -13,6 +13,9 @@ module Bukowski
         when SKNum
           # Numbers are values
           expr
+        when SKStr
+          # Strings are values
+          expr
         when SKVar
           # Check if it's a Church boolean or 'if'
           case expr.name
@@ -54,7 +57,7 @@ module Bukowski
             reduce_application(func, expr.arg)
           when SKVar
             # Check if it's a primitive operator
-            if ['+', '-', '*', '/', '=', '<', '>'].include?(func.name)
+            if ['+', '-', '*', '/', '%', '=', '<', '>'].include?(func.name)
               # Primitives are STRICT: reduce arg to get value
               SKPartialOp.new(func.name, reduce(expr.arg))
             else
@@ -64,6 +67,9 @@ module Bukowski
           when SKPartialOp
             # Primitives are STRICT: reduce second arg
             apply_primitive(func.op, func.arg, reduce(expr.arg))
+          when SKStr
+            # String applied to something? Just return as-is (shouldn't happen normally)
+            SKApp.new(func, expr.arg)
           else
             # General case - LAZY: don't reduce arg
             SKApp.new(func, expr.arg)
@@ -123,6 +129,8 @@ module Bukowski
           SKNum.new(a_val * b_val)
         when '/'
           SKNum.new(a_val / b_val)
+        when '%'
+          SKNum.new(a_val % b_val)
         when '=', '>', '<'
           # Comparison operations return Church booleans
           result = case op

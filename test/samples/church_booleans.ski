@@ -1,0 +1,9 @@
+# Church Booleans
+# In lambda calculus: true = \t.\f.t, false = \t.\f.f
+# In SK: true = K, false = K I
+
+# Test if with true condition
+# if (= 5 5) then 100 else 200
+# Should return 100
+
+if (= 5 5) 100 200

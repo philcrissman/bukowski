@@ -1,0 +1,10 @@
+# Multi-line lambda expression
+# This tests that expressions can span multiple lines
+
+# Define and apply a curried addition function
+# The entire application must be grouped with parentheses
+((\x.
+  \y.
+    + x y)
+10
+20)

@@ -1,0 +1,8 @@
+# Arithmetic operations
+# These are primitives in Bukowski
+
+# Add two numbers
++ 10 5
+
+# The last expression is printed
+* 3 7
