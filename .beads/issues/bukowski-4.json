@@ -1,0 +1,11 @@
+{
+  "id": "bukowski-4",
+  "subject": "Add general-purpose length operation",
+  "description": "Add a `length` built-in that works on sequences (strings and, eventually, lists). Not string-specific.\n\nBehavior:\n- `length \"hello\"` => Num(5)\n- `length someList` => Num(n) (once lists exist)\n- `length 42` => Ruby-level raise (atoms have no length)\n\nError handling: use Ruby `raise` for type errors until the algebraic effects system is implemented (see EFFECTS_PROPOSAL.md). Errors on atoms will surface in the REPL as runtime errors.\n\nImplementation: recognize `length` as a built-in Var in the evaluator (like `if`/`true`/`false`), apply it to the argument, check the type, and return a Num or raise.",
+  "status": "open",
+  "priority": 3,
+  "type": "feature",
+  "labels": ["evaluator", "strings", "lists"],
+  "created": "2026-01-29T00:00:00Z",
+  "updated": "2026-01-29T00:00:00Z"
+}

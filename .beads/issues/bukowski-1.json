@@ -1,0 +1,11 @@
+{
+  "id": "bukowski-1",
+  "subject": "Support string concatenation with + operator",
+  "description": "The tokenizer and parser handle strings, but `apply_operation` in evaluator.rb doesn't handle Str values for the `+` operator. Currently, `+ \"hello\" \"world\"` fails because `a_val` becomes a Str struct (not a Ruby string) and Struct doesn't define `+`. The evaluator also wraps results in `Num.new`, which is wrong for strings.\n\nNeed to:\n- Check if operands are Str in `apply_operation`\n- Extract `.value` from Str (like we do for Num)\n- Return `Str.new(...)` instead of `Num.new(...)` for string results\n- Decide behavior for mixed types (e.g., `+ \"count: \" 42`)",
+  "status": "open",
+  "priority": 2,
+  "type": "feature",
+  "labels": ["evaluator", "strings"],
+  "created": "2026-01-29T00:00:00Z",
+  "updated": "2026-01-29T00:00:00Z"
+}

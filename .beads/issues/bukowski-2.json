@@ -1,0 +1,11 @@
+{
+  "id": "bukowski-2",
+  "subject": "Support string equality comparison with = operator",
+  "description": "The `=` operator in `apply_operation` (evaluator.rb:128) doesn't properly handle Str values. Currently `a_val` for a Str is the Str struct itself (not the inner string), so `=` compares Struct equality. This accidentally works for same-type comparisons (Ruby Struct compares members), but it's fragile and not intentional.\n\nNeed to:\n- Extract `.value` from Str operands in `apply_operation`\n- Ensure `= \"hello\" \"hello\"` returns Church true\n- Ensure `= \"hello\" \"world\"` returns Church false\n- Decide behavior for cross-type comparison (e.g., `= \"42\" 42`)",
+  "status": "open",
+  "priority": 2,
+  "type": "feature",
+  "labels": ["evaluator", "strings"],
+  "created": "2026-01-29T00:00:00Z",
+  "updated": "2026-01-29T00:00:00Z"
+}
