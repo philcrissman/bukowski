@@ -1,0 +1,10 @@
+{
+  "id": "bukowski-6",
+  "title": "Implement closures",
+  "type": "feature",
+  "status": "open",
+  "priority": 2,
+  "description": "Ensure proper closure semantics — lambdas should capture their enclosing environment. Currently the SK translation may not preserve closure behavior correctly in all cases. This is a prerequisite for effects and handlers.",
+  "created": "2026-01-29",
+  "labels": ["feature"]
+}

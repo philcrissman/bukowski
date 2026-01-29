@@ -1,0 +1,11 @@
+{
+  "id": "bukowski-8",
+  "title": "Implement algebraic effects and handlers",
+  "type": "feature",
+  "status": "open",
+  "priority": 2,
+  "description": "Add algebraic effects and handlers for structured side effects including IO. This is the intended approach for all side effects in bukowski rather than monads or direct IO primitives. Requires continuations as a foundation.",
+  "created": "2026-01-29",
+  "labels": ["feature"],
+  "blockedBy": ["bukowski-7"]
+}

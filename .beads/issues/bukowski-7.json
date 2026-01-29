@@ -1,0 +1,11 @@
+{
+  "id": "bukowski-7",
+  "title": "Implement continuations",
+  "type": "feature",
+  "status": "open",
+  "priority": 2,
+  "description": "Add first-class continuations (call/cc or delimited continuations). Needed as a foundation for algebraic effects and handlers. Delimited continuations (shift/reset) may be a better fit than full call/cc for the effects system.",
+  "created": "2026-01-29",
+  "labels": ["feature"],
+  "blockedBy": ["bukowski-6"]
+}
