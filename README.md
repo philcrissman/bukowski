@@ -20,7 +20,82 @@ gem install UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
 
 ## Usage
 
-TODO: Write usage instructions here
+Start the REPL:
+
+```bash
+./bin/bukowski
+```
+
+Or execute a file:
+
+```bash
+./bin/bukowski myfile.bk
+```
+
+### Examples
+
+Bukowski uses prefix notation. Operators come before their arguments.
+
+```
+λ> + 2 3
+=> 5
+
+λ> * 4 5
+=> 20
+```
+
+Lambda abstractions use `\` (or `λ`) and `.` to separate the parameter from the body:
+
+```
+λ> (\x.+ x 1) 5
+=> 6
+
+λ> (\x.\y.+ x y) 3 4
+=> 7
+```
+
+Booleans are Church-encoded. Comparisons return Church booleans:
+
+```
+λ> = 2 2
+=> true
+
+λ> > 5 3
+=> true
+
+λ> = 1 2
+=> false
+```
+
+Use `if` with Church booleans:
+
+```
+λ> if (= 1 1) 10 20
+=> 10
+
+λ> if (= 1 2) 10 20
+=> 20
+```
+
+Strings support concatenation, comparison, and `length`:
+
+```
+λ> + "hello" " world"
+=> "hello world"
+
+λ> = "abc" "abc"
+=> true
+
+λ> length "hello"
+=> 5
+```
+
+`let` bindings desugar to lambda application:
+
+```
+λ> let x = 5 in + x 3
+=> 8
+```
 
 ## Development
 
