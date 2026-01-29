@@ -60,6 +60,8 @@ module Bukowski
             if ['+', '-', '*', '/', '%', '=', '<', '>'].include?(func.name)
               # Primitives are STRICT: reduce arg to get value
               SKPartialOp.new(func.name, reduce(expr.arg))
+            elsif func.name == 'length'
+              apply_builtin('length', reduce(expr.arg))
             else
               # Unknown variable - LAZY: don't reduce arg
               SKApp.new(func, expr.arg)
@@ -115,14 +117,27 @@ module Bukowski
         end
       end
 
+      def extract_value(node)
+        case node
+        when SKNum then node.value
+        when SKStr then node.value
+        else node
+        end
+      end
+
       def apply_primitive(op, a, b)
-        # Extract numeric values
-        a_val = a.is_a?(SKNum) ? a.value : a
-        b_val = b.is_a?(SKNum) ? b.value : b
+        a_val = extract_value(a)
+        b_val = extract_value(b)
 
         case op
         when '+'
-          SKNum.new(a_val + b_val)
+          if a.is_a?(SKStr) && b.is_a?(SKStr)
+            SKStr.new(a_val + b_val)
+          elsif a.is_a?(SKNum) && b.is_a?(SKNum)
+            SKNum.new(a_val + b_val)
+          else
+            raise "#{op}: type mismatch (#{a.class} and #{b.class})"
+          end
         when '-'
           SKNum.new(a_val - b_val)
         when '*'
@@ -132,14 +147,16 @@ module Bukowski
         when '%'
           SKNum.new(a_val % b_val)
         when '=', '>', '<'
-          # Comparison operations return Church booleans
-          result = case op
-          when '='
-            a_val == b_val
-          when '>'
-            a_val > b_val
-          when '<'
-            a_val < b_val
+          result = if op == '=' && a.class != b.class
+            false
+          elsif op != '=' && !((a.is_a?(SKNum) && b.is_a?(SKNum)) || (a.is_a?(SKStr) && b.is_a?(SKStr)))
+            raise "#{op}: type mismatch (#{a.class} and #{b.class})"
+          else
+            case op
+            when '=' then a_val == b_val
+            when '>' then a_val > b_val
+            when '<' then a_val < b_val
+            end
           end
 
           # Return Church boolean in SK form
@@ -150,6 +167,16 @@ module Bukowski
           end
         else
           raise "Unknown operator #{op}"
+        end
+      end
+
+      def apply_builtin(name, arg)
+        case name
+        when 'length'
+          raise "length: not a sequence" unless arg.is_a?(SKStr)
+          SKNum.new(arg.value.length)
+        else
+          raise "Unknown builtin #{name}"
         end
       end
     end

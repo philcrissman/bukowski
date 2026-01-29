@@ -224,4 +224,95 @@ class TestSKReducer < Minitest::Test
     result = @reducer.reduce(expr)
     assert_equal SKVar.new('b'), result
   end
+
+  # STRING OPERATION TESTS
+
+  def test_string_concatenation
+    # + "hello" " world" → "hello world"
+    expr = SKApp.new(
+      SKApp.new(SKVar.new('+'), SKStr.new("hello")),
+      SKStr.new(" world")
+    )
+    result = @reducer.reduce(expr)
+    assert_equal SKStr.new("hello world"), result
+  end
+
+  def test_string_equality_true
+    # = "abc" "abc" → K (Church true)
+    expr = SKApp.new(
+      SKApp.new(SKVar.new('='), SKStr.new("abc")),
+      SKStr.new("abc")
+    )
+    result = @reducer.reduce(expr)
+    assert_equal K.new, result
+  end
+
+  def test_string_equality_false
+    # = "abc" "def" → K I (Church false)
+    expr = SKApp.new(
+      SKApp.new(SKVar.new('='), SKStr.new("abc")),
+      SKStr.new("def")
+    )
+    result = @reducer.reduce(expr)
+    assert_equal SKApp.new(K.new, I.new), result
+  end
+
+  def test_string_equality_cross_type
+    # = "42" 42 → K I (Church false)
+    expr = SKApp.new(
+      SKApp.new(SKVar.new('='), SKStr.new("42")),
+      SKNum.new(42)
+    )
+    result = @reducer.reduce(expr)
+    assert_equal SKApp.new(K.new, I.new), result
+  end
+
+  def test_string_less_than
+    # < "abc" "def" → K (Church true)
+    expr = SKApp.new(
+      SKApp.new(SKVar.new('<'), SKStr.new("abc")),
+      SKStr.new("def")
+    )
+    result = @reducer.reduce(expr)
+    assert_equal K.new, result
+  end
+
+  def test_string_greater_than
+    # > "def" "abc" → K (Church true)
+    expr = SKApp.new(
+      SKApp.new(SKVar.new('>'), SKStr.new("def")),
+      SKStr.new("abc")
+    )
+    result = @reducer.reduce(expr)
+    assert_equal K.new, result
+  end
+
+  def test_string_concat_mixed_type_raises
+    # + "hello" 42 → raises
+    expr = SKApp.new(
+      SKApp.new(SKVar.new('+'), SKStr.new("hello")),
+      SKNum.new(42)
+    )
+    assert_raises(RuntimeError) { @reducer.reduce(expr) }
+  end
+
+  def test_length_string
+    # length "hello" → 5
+    expr = SKApp.new(SKVar.new('length'), SKStr.new("hello"))
+    result = @reducer.reduce(expr)
+    assert_equal SKNum.new(5), result
+  end
+
+  def test_length_empty_string
+    # length "" → 0
+    expr = SKApp.new(SKVar.new('length'), SKStr.new(""))
+    result = @reducer.reduce(expr)
+    assert_equal SKNum.new(0), result
+  end
+
+  def test_length_num_raises
+    # length 42 → raises
+    expr = SKApp.new(SKVar.new('length'), SKNum.new(42))
+    assert_raises(RuntimeError) { @reducer.reduce(expr) }
+  end
 end
