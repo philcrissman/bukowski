@@ -96,7 +96,7 @@ module Bukowski
     def parse_application
       left = parse_atom
 
-      while [:VAR, :OP, :NUM, :STR, :LPAREN, :TRUE, :FALSE, :IF].include?(current_token.type)
+      while [:VAR, :OP, :NUM, :STR, :LPAREN, :LBRACE, :TRUE, :FALSE, :IF].include?(current_token.type)
         right = parse_atom
         left = App.new(left, right)
       end
@@ -136,6 +136,19 @@ module Bukowski
         expr = parse_expr
         expect(:RPAREN)
         expr
+      when :LBRACE
+        advance
+        elements = []
+        while current_token.type != :RBRACE
+          elements << parse_atom
+        end
+        expect(:RBRACE)
+        # Desugar {a b c} to cons a (cons b (cons c nil))
+        list = Var.new('nil')
+        elements.reverse_each do |elem|
+          list = App.new(App.new(Var.new('cons'), elem), list)
+        end
+        list
       else
         raise "Unexpected token: #{current_token}"
       end

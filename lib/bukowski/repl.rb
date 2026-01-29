@@ -13,11 +13,29 @@ module Bukowski
       evaluator = CachedSKEvaluator.new
 
       loop do
-        print "λ> "
-        input = gets
-        break unless input  # Ctrl+D
+        buffer = ""
+        depth = 0
+        prompt = "λ> "
 
-        input = input.strip
+        loop do
+          print prompt
+          line = gets
+          unless line
+            # Ctrl+D
+            puts "\nGoodbye!"
+            return
+          end
+
+          buffer += line
+          line.each_char do |c|
+            depth += 1 if c == '(' || c == '{'
+            depth -= 1 if c == ')' || c == '}'
+          end
+          break if depth <= 0
+          prompt = ".. "
+        end
+
+        input = buffer.strip
         next if input.empty?
 
         begin
@@ -35,8 +53,6 @@ module Bukowski
           puts "Error: #{e.message}"
         end
       end
-
-      puts "\nGoodbye!"
     end
 
     private

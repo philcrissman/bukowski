@@ -16,6 +16,9 @@ module Bukowski
         when SKStr
           # Strings are values
           expr
+        when SKNil, SKCons
+          # Lists are values
+          expr
         when SKVar
           # Check if it's a Church boolean or 'if'
           case expr.name
@@ -28,11 +31,13 @@ module Bukowski
           when 'if'
             # if is identity for Church booleans: I
             I.new
+          when 'nil'
+            SKNil.new
           else
             # Other variables (operators, free vars) stay as-is
             expr
           end
-        when SKPartialOp
+        when SKPartialOp, SKPartialOp2
           # Partially applied operators are values
           expr
         when SKApp
@@ -57,11 +62,11 @@ module Bukowski
             reduce_application(func, expr.arg)
           when SKVar
             # Check if it's a primitive operator
-            if ['+', '-', '*', '/', '%', '=', '<', '>'].include?(func.name)
+            if ['+', '-', '*', '/', '%', '=', '<', '>', 'cons', 'map', 'fold'].include?(func.name)
               # Primitives are STRICT: reduce arg to get value
               SKPartialOp.new(func.name, reduce(expr.arg))
-            elsif func.name == 'length'
-              apply_builtin('length', reduce(expr.arg))
+            elsif ['length', 'head', 'tail', 'car', 'cdr', 'isnil', 'Y'].include?(func.name)
+              apply_builtin(func.name, reduce(expr.arg))
             else
               # Unknown variable - LAZY: don't reduce arg
               SKApp.new(func, expr.arg)
@@ -69,6 +74,9 @@ module Bukowski
           when SKPartialOp
             # Primitives are STRICT: reduce second arg
             apply_primitive(func.op, func.arg, reduce(expr.arg))
+          when SKPartialOp2
+            # 3-arg primitives: reduce third arg and apply
+            apply_ternary(func.op, func.arg1, func.arg2, reduce(expr.arg))
           when SKStr
             # String applied to something? Just return as-is (shouldn't happen normally)
             SKApp.new(func, expr.arg)
@@ -146,6 +154,12 @@ module Bukowski
           SKNum.new(a_val / b_val)
         when '%'
           SKNum.new(a_val % b_val)
+        when 'cons'
+          SKCons.new(a, b)
+        when 'map'
+          apply_map(a, b)
+        when 'fold'
+          SKPartialOp2.new('fold', a, b)
         when '=', '>', '<'
           result = if op == '=' && a.class != b.class
             false
@@ -175,9 +189,51 @@ module Bukowski
         when 'length'
           raise "length: not a sequence" unless arg.is_a?(SKStr)
           SKNum.new(arg.value.length)
+        when 'head', 'car'
+          raise "#{name}: empty list" unless arg.is_a?(SKCons)
+          arg.head
+        when 'tail', 'cdr'
+          raise "#{name}: empty list" unless arg.is_a?(SKCons)
+          arg.tail
+        when 'isnil'
+          if arg.is_a?(SKNil)
+            K.new
+          elsif arg.is_a?(SKCons)
+            SKApp.new(K.new, I.new)
+          else
+            raise "isnil: not a list"
+          end
+        when 'Y'
+          # Y f = f (Y f) — lazy unfolding
+          reduce(SKApp.new(arg, SKApp.new(SKVar.new('Y'), arg)))
         else
           raise "Unknown builtin #{name}"
         end
+      end
+
+      def apply_map(f, lst)
+        return SKNil.new if lst.is_a?(SKNil)
+        raise "map: not a list" unless lst.is_a?(SKCons)
+        head = reduce(SKApp.new(f, lst.head))
+        tail = apply_map(f, lst.tail)
+        SKCons.new(head, tail)
+      end
+
+      def apply_ternary(op, a, b, c)
+        case op
+        when 'fold'
+          apply_fold(a, b, c)
+        else
+          raise "Unknown ternary operator #{op}"
+        end
+      end
+
+      def apply_fold(f, init, lst)
+        return init if lst.is_a?(SKNil)
+        raise "fold: not a list" unless lst.is_a?(SKCons)
+        # Right fold: f head (fold f init tail)
+        rest = apply_fold(f, init, lst.tail)
+        reduce(SKApp.new(SKApp.new(f, lst.head), rest))
       end
     end
   end

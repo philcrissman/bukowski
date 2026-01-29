@@ -99,6 +99,42 @@ module Bukowski
       end
     end
 
+    # Empty list
+    class SKNil
+      def to_s
+        "{}"
+      end
+
+      def ==(other)
+        other.is_a?(SKNil)
+      end
+
+      def inspect
+        "SKNil"
+      end
+    end
+
+    # Cons cell (head, tail)
+    SKCons = Struct.new(:head, :tail) do
+      def to_s
+        elements = []
+        current = self
+        while current.is_a?(SKCons)
+          elements << current.head.to_s
+          current = current.tail
+        end
+        if current.is_a?(SKNil)
+          "{#{elements.join(' ')}}"
+        else
+          "{#{elements.join(' ')} . #{current}}"
+        end
+      end
+
+      def inspect
+        "#<SKCons #{head.inspect} #{tail.inspect}>"
+      end
+    end
+
     # Partially applied operator (for primitive operations)
     SKPartialOp = Struct.new(:op, :arg) do
       def to_s
@@ -107,6 +143,17 @@ module Bukowski
 
       def inspect
         "#<SKPartialOp #{op} #{arg}>"
+      end
+    end
+
+    # Doubly partially applied operator (for 3-arg operations like fold)
+    SKPartialOp2 = Struct.new(:op, :arg1, :arg2) do
+      def to_s
+        "(#{op} #{arg1} #{arg2} ...)"
+      end
+
+      def inspect
+        "#<SKPartialOp2 #{op} #{arg1} #{arg2}>"
       end
     end
   end

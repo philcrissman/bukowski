@@ -81,7 +81,8 @@ module Bukowski
         else
           # For SK expressions that might appear during nested translation
           if body.is_a?(SKApp) || body.is_a?(S) || body.is_a?(K) ||
-             body.is_a?(I) || body.is_a?(SKVar) || body.is_a?(SKNum)
+             body.is_a?(I) || body.is_a?(SKVar) || body.is_a?(SKNum) ||
+             body.is_a?(SKNil) || body.is_a?(SKCons)
             # Already in SK form - check if param appears
             if contains_var?(body, param)
               # Need to abstract over SK expression
@@ -103,8 +104,10 @@ module Bukowski
         case expr
         when SKVar
           expr.name == var_name
-        when SKNum, SKStr, S, K, I
+        when SKNum, SKStr, SKNil, S, K, I
           false
+        when SKCons
+          contains_var?(expr.head, var_name) || contains_var?(expr.tail, var_name)
         when SKApp
           contains_var?(expr.func, var_name) || contains_var?(expr.arg, var_name)
         else
@@ -121,8 +124,12 @@ module Bukowski
           else
             SKApp.new(K.new, expr)
           end
-        when SKNum, SKStr, S, K, I
+        when SKNum, SKStr, SKNil, S, K, I
           SKApp.new(K.new, expr)
+        when SKCons
+          left = abstract_sk_expr(param, expr.head)
+          right = abstract_sk_expr(param, expr.tail)
+          SKApp.new(SKApp.new(S.new, left), right)
         when SKApp
           left = abstract_sk_expr(param, expr.func)
           right = abstract_sk_expr(param, expr.arg)

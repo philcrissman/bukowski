@@ -54,6 +54,12 @@ module Bukowski
       when ')'
         advance
         Token.new(:RPAREN)
+      when '{'
+        advance
+        Token.new(:LBRACE)
+      when '}'
+        advance
+        Token.new(:RBRACE)
       when '0'..'9'
         num = String.new
         while !eof? && current_char =~ /[0-9]/

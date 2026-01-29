@@ -1,4 +1,6 @@
 require "minitest/autorun"
+require_relative "../lib/bukowski/tokenizer"
+require_relative "../lib/bukowski/parser"
 require_relative "../lib/bukowski/sk_translator"
 require_relative "../lib/bukowski/sk_reducer"
 
@@ -36,6 +38,12 @@ class TestIntegration < Minitest::Test
   def evaluate(expr)
     sk_expr = @sk_translator.translate(expr)
     @sk_reducer.reduce(sk_expr)
+  end
+
+  def evaluate_source(source)
+    tokens = Tokenizer.new(source).tokenize
+    ast = Parser.new(tokens).parse
+    evaluate(ast)
   end
 
   # Test: Identity function
@@ -187,5 +195,98 @@ class TestIntegration < Minitest::Test
 
     result = evaluate(expr)
     assert_equal 5, sk_to_comparable(result)
+  end
+
+  # LIST INTEGRATION TESTS
+
+  def test_list_literal
+    # {1 2 3} → SKCons(1, SKCons(2, SKCons(3, SKNil)))
+    result = evaluate_source("{1 2 3}")
+    expected = SKCons.new(SKNum.new(1), SKCons.new(SKNum.new(2), SKCons.new(SKNum.new(3), SKNil.new)))
+    assert_equal expected, result
+  end
+
+  def test_empty_list
+    # {} → SKNil
+    result = evaluate_source("{}")
+    assert_equal SKNil.new, result
+  end
+
+  def test_head_of_list
+    # head {1 2 3} → 1
+    result = evaluate_source("head {1 2 3}")
+    assert_equal SKNum.new(1), result
+  end
+
+  def test_tail_of_list
+    # tail {1 2 3} → {2 3}
+    result = evaluate_source("tail {1 2 3}")
+    expected = SKCons.new(SKNum.new(2), SKCons.new(SKNum.new(3), SKNil.new))
+    assert_equal expected, result
+  end
+
+  def test_cons_onto_list
+    # cons 0 {1 2 3} → {0 1 2 3}
+    result = evaluate_source("cons 0 {1 2 3}")
+    expected = SKCons.new(SKNum.new(0), SKCons.new(SKNum.new(1), SKCons.new(SKNum.new(2), SKCons.new(SKNum.new(3), SKNil.new))))
+    assert_equal expected, result
+  end
+
+  def test_isnil_empty
+    # isnil {} → true
+    result = evaluate_source("isnil {}")
+    assert_equal :church_true, sk_to_comparable(result)
+  end
+
+  def test_isnil_nonempty
+    # isnil {1} → false
+    result = evaluate_source("isnil {1}")
+    assert_equal :church_false, sk_to_comparable(result)
+  end
+
+  def test_list_to_s
+    # Verify pretty-printing
+    result = evaluate_source("{1 2 3}")
+    assert_equal "{1 2 3}", result.to_s
+  end
+
+  # MAP / FOLD / Y INTEGRATION TESTS
+
+  def test_map_source
+    # map (\x.* x 2) {1 2 3} → {2 4 6}
+    result = evaluate_source('map (\x.* x 2) {1 2 3}')
+    assert_equal "{2 4 6}", result.to_s
+  end
+
+  def test_map_empty_source
+    # map (\x.* x 2) {} → {}
+    result = evaluate_source('map (\x.* x 2) {}')
+    assert_equal SKNil.new, result
+  end
+
+  def test_fold_source
+    # fold (\x.\y.+ x y) 0 {1 2 3} → 6
+    result = evaluate_source('fold (\x.\y.+ x y) 0 {1 2 3}')
+    assert_equal SKNum.new(6), result
+  end
+
+  def test_fold_empty_source
+    # fold (\x.\y.+ x y) 0 {} → 0
+    result = evaluate_source('fold (\x.\y.+ x y) 0 {}')
+    assert_equal SKNum.new(0), result
+  end
+
+  def test_y_recursive
+    # Sum 1..3 using Y combinator
+    source = 'let sum = Y (\self.\n.if (= n 0) 0 (+ n (self (- n 1)))) in sum 3'
+    result = evaluate_source(source)
+    assert_equal SKNum.new(6), result
+  end
+
+  def test_y_with_list
+    # Double each element using Y
+    source = 'let double = Y (\self.\lst.if (isnil lst) {} (cons (* 2 (head lst)) (self (tail lst)))) in double {1 2 3}'
+    result = evaluate_source(source)
+    assert_equal "{2 4 6}", result.to_s
   end
 end

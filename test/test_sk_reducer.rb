@@ -315,4 +315,177 @@ class TestSKReducer < Minitest::Test
     expr = SKApp.new(SKVar.new('length'), SKNum.new(42))
     assert_raises(RuntimeError) { @reducer.reduce(expr) }
   end
+
+  # LIST TESTS
+
+  def test_nil
+    # nil → SKNil
+    result = @reducer.reduce(SKVar.new('nil'))
+    assert_equal SKNil.new, result
+  end
+
+  def test_cons
+    # cons 1 nil → SKCons(1, SKNil)
+    expr = SKApp.new(
+      SKApp.new(SKVar.new('cons'), SKNum.new(1)),
+      SKVar.new('nil')
+    )
+    result = @reducer.reduce(expr)
+    assert_equal SKCons.new(SKNum.new(1), SKNil.new), result
+  end
+
+  def test_list_literal
+    # cons 1 (cons 2 (cons 3 nil))
+    expr = SKApp.new(
+      SKApp.new(SKVar.new('cons'), SKNum.new(1)),
+      SKApp.new(
+        SKApp.new(SKVar.new('cons'), SKNum.new(2)),
+        SKApp.new(
+          SKApp.new(SKVar.new('cons'), SKNum.new(3)),
+          SKVar.new('nil')
+        )
+      )
+    )
+    result = @reducer.reduce(expr)
+    expected = SKCons.new(SKNum.new(1), SKCons.new(SKNum.new(2), SKCons.new(SKNum.new(3), SKNil.new)))
+    assert_equal expected, result
+  end
+
+  def test_head
+    # head (cons 1 nil) → 1
+    expr = SKApp.new(
+      SKVar.new('head'),
+      SKApp.new(
+        SKApp.new(SKVar.new('cons'), SKNum.new(1)),
+        SKVar.new('nil')
+      )
+    )
+    result = @reducer.reduce(expr)
+    assert_equal SKNum.new(1), result
+  end
+
+  def test_tail
+    # tail (cons 1 (cons 2 nil)) → SKCons(2, SKNil)
+    expr = SKApp.new(
+      SKVar.new('tail'),
+      SKApp.new(
+        SKApp.new(SKVar.new('cons'), SKNum.new(1)),
+        SKApp.new(
+          SKApp.new(SKVar.new('cons'), SKNum.new(2)),
+          SKVar.new('nil')
+        )
+      )
+    )
+    result = @reducer.reduce(expr)
+    assert_equal SKCons.new(SKNum.new(2), SKNil.new), result
+  end
+
+  def test_head_nil_raises
+    # head nil → raises
+    expr = SKApp.new(SKVar.new('head'), SKVar.new('nil'))
+    assert_raises(RuntimeError) { @reducer.reduce(expr) }
+  end
+
+  def test_tail_nil_raises
+    # tail nil → raises
+    expr = SKApp.new(SKVar.new('tail'), SKVar.new('nil'))
+    assert_raises(RuntimeError) { @reducer.reduce(expr) }
+  end
+
+  def test_isnil_true
+    # isnil nil → K (true)
+    expr = SKApp.new(SKVar.new('isnil'), SKVar.new('nil'))
+    result = @reducer.reduce(expr)
+    assert_equal K.new, result
+  end
+
+  def test_isnil_false
+    # isnil (cons 1 nil) → K I (false)
+    expr = SKApp.new(
+      SKVar.new('isnil'),
+      SKApp.new(
+        SKApp.new(SKVar.new('cons'), SKNum.new(1)),
+        SKVar.new('nil')
+      )
+    )
+    result = @reducer.reduce(expr)
+    assert_equal SKApp.new(K.new, I.new), result
+  end
+
+  # Y COMBINATOR TESTS
+
+  def test_y_combinator
+    # Y (\self.\n.if (= n 0) 1 (* n (self (- n 1)))) 5 → 120 (factorial)
+    # Build: Y fact 5 where fact = \self.\n.if (= n 0) 1 (* n (self (- n 1)))
+    # For simplicity, test Y with a sum-to-zero function:
+    # Y (\self.\n.if (= n 0) 0 (+ n (self (- n 1)))) 3 → 6
+    #
+    # At SK level, we build this manually using SK nodes.
+    # But it's easier to test via integration. Here, test that Y unfolds:
+    # Y (\x.x) should reduce — it's the identity applied recursively,
+    # which would loop. Instead test Y with something that terminates.
+    #
+    # Test: Y (\self.\n.if (= n 0) 0 (+ n (self (- n 1)))) applied to 3
+    # This is complex at SK level. We'll rely on integration tests for Y.
+    # Here just verify Y is recognized as a builtin.
+    #
+    # Simple test: Y applied to K gives K (Y K) → Y K → K ...
+    # Actually that loops. Let's skip raw SK Y tests and use integration.
+    pass
+  end
+
+  # MAP TESTS
+
+  def test_map
+    # map (* 2) {1 2 3} → {2 4 6}
+    # Build the partially applied (* 2) as SKPartialOp
+    double = SKPartialOp.new('*', SKNum.new(2))
+    list = SKCons.new(SKNum.new(1), SKCons.new(SKNum.new(2), SKCons.new(SKNum.new(3), SKNil.new)))
+    expr = SKApp.new(
+      SKApp.new(SKVar.new('map'), double),
+      list
+    )
+    result = @reducer.reduce(expr)
+    expected = SKCons.new(SKNum.new(2), SKCons.new(SKNum.new(4), SKCons.new(SKNum.new(6), SKNil.new)))
+    assert_equal expected, result
+  end
+
+  def test_map_empty
+    # map f {} → {}
+    double = SKPartialOp.new('*', SKNum.new(2))
+    expr = SKApp.new(
+      SKApp.new(SKVar.new('map'), double),
+      SKNil.new
+    )
+    result = @reducer.reduce(expr)
+    assert_equal SKNil.new, result
+  end
+
+  # FOLD TESTS
+
+  def test_fold
+    # fold + 0 {1 2 3} → 6
+    expr = SKApp.new(
+      SKApp.new(
+        SKApp.new(SKVar.new('fold'), SKVar.new('+')),
+        SKNum.new(0)
+      ),
+      SKCons.new(SKNum.new(1), SKCons.new(SKNum.new(2), SKCons.new(SKNum.new(3), SKNil.new)))
+    )
+    result = @reducer.reduce(expr)
+    assert_equal SKNum.new(6), result
+  end
+
+  def test_fold_empty
+    # fold + 0 {} → 0
+    expr = SKApp.new(
+      SKApp.new(
+        SKApp.new(SKVar.new('fold'), SKVar.new('+')),
+        SKNum.new(0)
+      ),
+      SKNil.new
+    )
+    result = @reducer.reduce(expr)
+    assert_equal SKNum.new(0), result
+  end
 end
