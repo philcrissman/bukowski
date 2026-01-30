@@ -2,7 +2,7 @@
   "id": "bukowski-5",
   "title": "Add define/defun for top-level bindings",
   "type": "feature",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "description": "Add define or defun (Scheme/Lisp-style) as an alternative to let for defining named functions and values. let should remain available. Consider: should define be sugar for let, or should it introduce a top-level environment that persists across REPL expressions? Scheme's define mutates the environment, which would be a bigger change than pure desugaring.",
   "created": "2026-01-29",
