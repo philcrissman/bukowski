@@ -1,0 +1,11 @@
+{
+  "id": "bukowski-9",
+  "title": "Add a prelude: standard library written in bukowski",
+  "type": "feature",
+  "status": "open",
+  "priority": 2,
+  "description": "Add a prelude.bk file that gets loaded before user code. Define map, fold, filter, length (for lists), and other standard functions using Y and the core primitives — written in bukowski itself rather than as native Ruby builtins in the reducer. This would replace the native apply_map and apply_fold implementations, proving the language is expressive enough to define its own standard library. Consider: how does the prelude interact with define/defun (bukowski-5)? Definitions need to persist in the environment.",
+  "created": "2026-01-29",
+  "labels": ["feature"],
+  "related": ["bukowski-5"]
+}
