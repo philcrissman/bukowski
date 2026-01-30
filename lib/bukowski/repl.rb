@@ -11,6 +11,7 @@ module Bukowski
       puts
 
       evaluator = CachedSKEvaluator.new
+      defines = []
 
       loop do
         buffer = ""
@@ -41,13 +42,20 @@ module Bukowski
         begin
           tokens = Tokenizer.new(input).tokenize
           ast = Parser.new(tokens).parse
-          result = evaluator.evaluate(ast)
 
-          # Pretty print Church booleans
-          if boolean = sk_church_boolean?(result)
-            puts "=> #{boolean}"
+          if ast.is_a?(Define)
+            defines << ast
+            puts "defined: #{ast.name}"
           else
-            puts "=> #{result}"
+            wrapped = Parser.wrap_defines(defines, ast)
+            result = evaluator.evaluate(wrapped)
+
+            # Pretty print Church booleans
+            if boolean = sk_church_boolean?(result)
+              puts "=> #{boolean}"
+            else
+              puts "=> #{result}"
+            end
           end
         rescue => e
           puts "Error: #{e.message}"

@@ -51,6 +51,15 @@ class TestTokenizer < Minitest::Test
     )
   end
 
+  def test_float
+    input = '3.14'
+    tokens = Tokenizer.new(input).tokenize.map(&:to_s)
+    assert_equal(
+      %w[NUM(3.14) EOF],
+      tokens
+    )
+  end
+
   def test_operations
     input = '(+ 3 2)'
     tokens = Tokenizer.new(input).tokenize.map(&:to_s)

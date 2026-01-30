@@ -27,6 +27,8 @@ module Bukowski
     end
   end
 
+  Define = Struct.new(:name, :value)
+
   class Parser
     def initialize(tokens)
       @tokens = tokens
@@ -43,6 +45,13 @@ module Bukowski
         expressions << parse_expr
       end
       expressions
+    end
+
+    def self.wrap_defines(defines, body)
+      defines.reverse_each do |defn|
+        body = App.new(Abs.new(defn.name, body), defn.value)
+      end
+      body
     end
 
     private
@@ -67,6 +76,8 @@ module Bukowski
         parse_abstraction
       elsif current_token.type == :LET
         parse_let
+      elsif current_token.type == :DEFINE
+        parse_define
       else
         parse_application
       end
@@ -91,6 +102,15 @@ module Bukowski
       body = parse_expr
       # Desugar: let x = v in b  =>  (λx.b) v
       App.new(Abs.new(var, body), value)
+    end
+
+    def parse_define
+      expect(:DEFINE)
+      name = expect(:VAR).value
+      raise "Expected '=' in define" unless current_token.type == :OP && current_token.value == '='
+      advance
+      value = parse_expr
+      Define.new(name, value)
     end
 
     def parse_application

@@ -1,6 +1,7 @@
 require "minitest/autorun"
 require_relative "../lib/bukowski/tokenizer"
 require_relative "../lib/bukowski/parser"
+require_relative "../lib/bukowski/cached_sk_evaluator"
 require_relative "../lib/bukowski/sk_translator"
 require_relative "../lib/bukowski/sk_reducer"
 
@@ -288,5 +289,38 @@ class TestIntegration < Minitest::Test
     source = 'let double = Y (\self.\lst.if (isnil lst) {} (cons (* 2 (head lst)) (self (tail lst)))) in double {1 2 3}'
     result = evaluate_source(source)
     assert_equal "{2 4 6}", result.to_s
+  end
+
+  # DEFINE TESTS
+
+  def evaluate_program(source)
+    evaluator = CachedSKEvaluator.new
+    results = evaluator.evaluate_program(source)
+    results.last
+  end
+
+  def test_define_simple
+    result = evaluate_program("define x = 5\nx")
+    assert_equal SKNum.new(5), result
+  end
+
+  def test_define_function
+    result = evaluate_program("define double = \\x.* x 2\ndouble 3")
+    assert_equal SKNum.new(6), result
+  end
+
+  def test_define_uses_prior
+    result = evaluate_program("define x = 5\ndefine y = + x 1\ny")
+    assert_equal SKNum.new(6), result
+  end
+
+  def test_define_file_multiple_defines
+    source = <<~BK
+      define double = \\x.* x 2
+      define square = \\x.* x x
+      square (double 3)
+    BK
+    result = evaluate_program(source)
+    assert_equal SKNum.new(36), result
   end
 end

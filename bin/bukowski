@@ -24,52 +24,14 @@ module Bukowski
         exit 1
       end
 
-      lines = File.readlines(filename)
+      source = File.read(filename)
 
       begin
         evaluator = CachedSKEvaluator.new
-        expressions = []
+        results = evaluator.evaluate_program(source)
 
-        # Parse line by line
-        # Multi-line expressions need parentheses for grouping
-        buffer = ""
-        paren_depth = 0
-
-        lines.each do |line|
-          # Track parenthesis depth to handle multi-line expressions
-          line.chars.each do |char|
-            paren_depth += 1 if char == '('
-            paren_depth -= 1 if char == ')'
-          end
-
-          buffer += line
-
-          # Expression is complete when parens are balanced
-          if paren_depth == 0
-            stripped = buffer.strip
-            unless stripped.empty? || stripped.start_with?('#')
-              tokens = Tokenizer.new(buffer).tokenize
-              ast = Parser.new(tokens).parse
-              expressions << ast
-            end
-            buffer = ""
-          end
-        end
-
-        # Handle any remaining buffer (incomplete expression)
-        unless buffer.strip.empty?
-          tokens = Tokenizer.new(buffer).tokenize
-          ast = Parser.new(tokens).parse
-          expressions << ast
-        end
-
-        if expressions.empty?
+        if results.empty?
           exit 0
-        end
-
-        results = []
-        expressions.each do |expr|
-          results << evaluator.evaluate(expr)
         end
 
         # Print only the final result

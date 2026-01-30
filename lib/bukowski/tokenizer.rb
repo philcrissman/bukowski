@@ -92,11 +92,12 @@ module Bukowski
         end
 
         case word
-        when 'true'  then Token.new(:TRUE)
-        when 'false' then Token.new(:FALSE)
-        when 'if'    then Token.new(:IF)
-        when 'let'   then Token.new(:LET)
-        when 'in'    then Token.new(:IN)
+        when 'true'   then Token.new(:TRUE)
+        when 'false'  then Token.new(:FALSE)
+        when 'if'     then Token.new(:IF)
+        when 'let'    then Token.new(:LET)
+        when 'in'     then Token.new(:IN)
+        when 'define' then Token.new(:DEFINE)
         else Token.new(:VAR, word)
         end
       when '+', '-', '*', '/', '%', '=', '<', '>'
