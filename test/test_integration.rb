@@ -300,24 +300,24 @@ class TestIntegration < Minitest::Test
   end
 
   def test_define_simple
-    result = evaluate_program("define x = 5\nx")
+    result = evaluate_program("define x 5\nx")
     assert_equal SKNum.new(5), result
   end
 
   def test_define_function
-    result = evaluate_program("define double = \\x.* x 2\ndouble 3")
+    result = evaluate_program("define double \\x.* x 2\ndouble 3")
     assert_equal SKNum.new(6), result
   end
 
   def test_define_uses_prior
-    result = evaluate_program("define x = 5\ndefine y = + x 1\ny")
+    result = evaluate_program("define x 5\ndefine y (+ x 1)\ny")
     assert_equal SKNum.new(6), result
   end
 
   def test_define_file_multiple_defines
     source = <<~BK
-      define double = \\x.* x 2
-      define square = \\x.* x x
+      define double \\x.* x 2
+      define square \\x.* x x
       square (double 3)
     BK
     result = evaluate_program(source)

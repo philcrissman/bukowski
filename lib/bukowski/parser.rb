@@ -107,8 +107,6 @@ module Bukowski
     def parse_define
       expect(:DEFINE)
       name = expect(:VAR).value
-      raise "Expected '=' in define" unless current_token.type == :OP && current_token.value == '='
-      advance
       value = parse_expr
       Define.new(name, value)
     end
