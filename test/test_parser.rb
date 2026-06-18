@@ -1,4 +1,5 @@
 require "minitest/autorun"
+require_relative "../lib/bukowski/tokenizer"
 require_relative "../lib/bukowski/parser"
 
 class TestParser < Minitest::Test

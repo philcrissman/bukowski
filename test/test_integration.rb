@@ -198,6 +198,53 @@ class TestIntegration < Minitest::Test
     assert_equal 5, sk_to_comparable(result)
   end
 
+  # STRING INTEGRATION TESTS
+
+  def test_string_concatenation
+    result = evaluate_source('+ "hello" " world"')
+    assert_equal SKStr.new("hello world"), result
+  end
+
+  def test_string_equality_true
+    result = evaluate_source('= "hello" "hello"')
+    assert_equal :church_true, sk_to_comparable(result)
+  end
+
+  def test_string_equality_false
+    result = evaluate_source('= "hello" "world"')
+    assert_equal :church_false, sk_to_comparable(result)
+  end
+
+  def test_string_less_than
+    result = evaluate_source('< "abc" "def"')
+    assert_equal :church_true, sk_to_comparable(result)
+  end
+
+  def test_string_greater_than
+    result = evaluate_source('> "def" "abc"')
+    assert_equal :church_true, sk_to_comparable(result)
+  end
+
+  def test_string_not_less_than
+    result = evaluate_source('< "def" "abc"')
+    assert_equal :church_false, sk_to_comparable(result)
+  end
+
+  def test_string_if_equality
+    result = evaluate_source('if (= "yes" "yes") 1 0')
+    assert_equal SKNum.new(1), result
+  end
+
+  def test_string_length
+    result = evaluate_source('length "hello"')
+    assert_equal SKNum.new(5), result
+  end
+
+  def test_string_length_empty
+    result = evaluate_source('length ""')
+    assert_equal SKNum.new(0), result
+  end
+
   # LIST INTEGRATION TESTS
 
   def test_list_literal
@@ -249,6 +296,21 @@ class TestIntegration < Minitest::Test
     # Verify pretty-printing
     result = evaluate_source("{1 2 3}")
     assert_equal "{1 2 3}", result.to_s
+  end
+
+  def test_list_length
+    result = evaluate_source("length {1 2 3}")
+    assert_equal SKNum.new(3), result
+  end
+
+  def test_list_length_empty
+    result = evaluate_source("length {}")
+    assert_equal SKNum.new(0), result
+  end
+
+  def test_list_length_single
+    result = evaluate_source("length {42}")
+    assert_equal SKNum.new(1), result
   end
 
   # MAP / FOLD / Y INTEGRATION TESTS

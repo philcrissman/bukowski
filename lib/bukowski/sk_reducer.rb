@@ -187,8 +187,22 @@ module Bukowski
       def apply_builtin(name, arg)
         case name
         when 'length'
-          raise "length: not a sequence" unless arg.is_a?(SKStr)
-          SKNum.new(arg.value.length)
+          case arg
+          when SKStr
+            SKNum.new(arg.value.length)
+          when SKNil
+            SKNum.new(0)
+          when SKCons
+            count = 0
+            node = arg
+            while node.is_a?(SKCons)
+              count += 1
+              node = node.tail
+            end
+            SKNum.new(count)
+          else
+            raise "length: not a sequence"
+          end
         when 'head', 'car'
           raise "#{name}: empty list" unless arg.is_a?(SKCons)
           arg.head

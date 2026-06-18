@@ -310,6 +310,29 @@ class TestSKReducer < Minitest::Test
     assert_equal SKNum.new(0), result
   end
 
+  def test_length_list
+    # length {1 2 3} → 3
+    list = SKCons.new(SKNum.new(1), SKCons.new(SKNum.new(2), SKCons.new(SKNum.new(3), SKNil.new)))
+    expr = SKApp.new(SKVar.new('length'), list)
+    result = @reducer.reduce(expr)
+    assert_equal SKNum.new(3), result
+  end
+
+  def test_length_empty_list
+    # length {} → 0
+    expr = SKApp.new(SKVar.new('length'), SKNil.new)
+    result = @reducer.reduce(expr)
+    assert_equal SKNum.new(0), result
+  end
+
+  def test_length_single_list
+    # length {42} → 1
+    list = SKCons.new(SKNum.new(42), SKNil.new)
+    expr = SKApp.new(SKVar.new('length'), list)
+    result = @reducer.reduce(expr)
+    assert_equal SKNum.new(1), result
+  end
+
   def test_length_num_raises
     # length 42 → raises
     expr = SKApp.new(SKVar.new('length'), SKNum.new(42))
