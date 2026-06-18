@@ -1,0 +1,35 @@
+# Bukowski Prelude
+# Standard library loaded automatically before user code.
+# Everything here is written in bukowski itself (except
+# builtins like show, parse, head, tail, cons, etc. which
+# live in the reducer).
+
+# Combinators
+define id \x.x
+define const \x.\y.x
+define compose \f.\g.\x.f (g x)
+define flip \f.\x.\y.f y x
+define apply \f.\x.f x
+
+# Church boolean operations
+define not \b.b false true
+define and \a.\b.a b false
+define or \a.\b.a true b
+
+# Church pairs
+define pair \a.\b.\f.f a b
+define fst \p.p \a.\b.a
+define snd \p.p \a.\b.b
+
+# List utilities
+define filter (Y \self.\f.\xs.if (isnil xs) {} (if (f (head xs)) (cons (head xs) (self f (tail xs))) (self f (tail xs))))
+define append (Y \self.\xs.\ys.if (isnil xs) ys (cons (head xs) (self (tail xs) ys)))
+define reverse (Y \self.\xs.if (isnil xs) {} (append (self (tail xs)) (cons (head xs) {})))
+define nth (Y \self.\n.\xs.if (= n 0) (head xs) (self (- n 1) (tail xs)))
+define take (Y \self.\n.\xs.if (= n 0) {} (if (isnil xs) {} (cons (head xs) (self (- n 1) (tail xs)))))
+define drop (Y \self.\n.\xs.if (= n 0) xs (if (isnil xs) {} (self (- n 1) (tail xs))))
+define zip (Y \self.\xs.\ys.if (isnil xs) {} (if (isnil ys) {} (cons (cons (head xs) (cons (head ys) {})) (self (tail xs) (tail ys)))))
+define any (Y \self.\f.\xs.if (isnil xs) false (if (f (head xs)) true (self f (tail xs))))
+define all (Y \self.\f.\xs.if (isnil xs) true (if (f (head xs)) (self f (tail xs)) false))
+define sum (fold + 0)
+define product (fold * 1)

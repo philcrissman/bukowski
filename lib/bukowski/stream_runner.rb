@@ -1,15 +1,17 @@
 # frozen_string_literal: true
 
 require_relative 'cached_sk_evaluator'
+require_relative 'prelude'
 
 module Bukowski
   class StreamRunner
     attr_reader :exit_code
 
-    def initialize(input: $stdin, output: $stdout, fs: nil)
+    def initialize(input: $stdin, output: $stdout, fs: nil, no_prelude: false)
       @input = input
       @output = output
       @fs = fs || RealFS.new
+      @no_prelude = no_prelude
       @evaluator = CachedSKEvaluator.new
       @reducer = SK::Reducer.new(lazy_cons: true)
       @responses = []
@@ -18,7 +20,7 @@ module Bukowski
     end
 
     def run(source)
-      defines = []
+      defines = @no_prelude ? [] : Prelude.load_defines(@evaluator)
       program = nil
 
       @evaluator.send(:each_statement, source) do |stmt|

@@ -114,9 +114,15 @@ module Bukowski
     def parse_application
       left = parse_atom
 
-      while [:VAR, :OP, :NUM, :STR, :LPAREN, :LBRACE, :TRUE, :FALSE, :IF].include?(current_token.type)
-        right = parse_atom
-        left = App.new(left, right)
+      while [:VAR, :OP, :NUM, :STR, :LPAREN, :LBRACE, :TRUE, :FALSE, :IF, :LAM].include?(current_token.type)
+        if current_token.type == :LAM
+          right = parse_abstraction
+          left = App.new(left, right)
+          break
+        else
+          right = parse_atom
+          left = App.new(left, right)
+        end
       end
 
       left

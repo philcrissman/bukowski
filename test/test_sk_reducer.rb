@@ -512,6 +512,54 @@ class TestSKReducer < Minitest::Test
     assert_equal SKNum.new(0), result
   end
 
+  # SHOW / PARSE BUILTIN TESTS
+
+  def test_show_number
+    expr = SKApp.new(SKVar.new('show'), SKNum.new(42))
+    result = @reducer.reduce(expr)
+    assert_equal SKStr.new("42"), result
+  end
+
+  def test_show_string
+    expr = SKApp.new(SKVar.new('show'), SKStr.new("hello"))
+    result = @reducer.reduce(expr)
+    assert_equal SKStr.new("hello"), result
+  end
+
+  def test_show_nil
+    expr = SKApp.new(SKVar.new('show'), SKNil.new)
+    result = @reducer.reduce(expr)
+    assert_equal SKStr.new("{}"), result
+  end
+
+  def test_parse_integer
+    expr = SKApp.new(SKVar.new('parse'), SKStr.new("42"))
+    result = @reducer.reduce(expr)
+    assert_equal SKNum.new(42), result
+  end
+
+  def test_parse_negative
+    expr = SKApp.new(SKVar.new('parse'), SKStr.new("-7"))
+    result = @reducer.reduce(expr)
+    assert_equal SKNum.new(-7), result
+  end
+
+  def test_parse_float
+    expr = SKApp.new(SKVar.new('parse'), SKStr.new("3.14"))
+    result = @reducer.reduce(expr)
+    assert_equal SKNum.new(3.14), result
+  end
+
+  def test_parse_non_number_raises
+    expr = SKApp.new(SKVar.new('parse'), SKStr.new("abc"))
+    assert_raises(RuntimeError) { @reducer.reduce(expr) }
+  end
+
+  def test_parse_non_string_raises
+    expr = SKApp.new(SKVar.new('parse'), SKNum.new(5))
+    assert_raises(RuntimeError) { @reducer.reduce(expr) }
+  end
+
   # SKLAZY TESTS
 
   def test_lazy_is_value

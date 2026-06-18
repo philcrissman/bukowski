@@ -75,7 +75,7 @@ module Bukowski
               reduced = reduce(expr.arg)
               reduced = force(reduced) unless func.name == 'cons'
               SKPartialOp.new(func.name, reduced)
-            elsif ['length', 'head', 'tail', 'car', 'cdr', 'isnil', 'Y'].include?(func.name)
+            elsif ['length', 'head', 'tail', 'car', 'cdr', 'isnil', 'Y', 'show', 'parse'].include?(func.name)
               apply_builtin(func.name, force(reduce(expr.arg)))
             else
               # Unknown variable - LAZY: don't reduce arg
@@ -247,6 +247,29 @@ module Bukowski
         when 'Y'
           # Y f = f (Y f) — lazy unfolding
           reduce(SKApp.new(arg, SKApp.new(SKVar.new('Y'), arg)))
+        when 'show'
+          case arg
+          when SKNum
+            SKStr.new(arg.value.to_s)
+          when SKStr
+            arg
+          when SKNil
+            SKStr.new("{}")
+          when SKCons
+            SKStr.new(arg.to_s)
+          else
+            SKStr.new(arg.to_s)
+          end
+        when 'parse'
+          raise "parse: not a string" unless arg.is_a?(SKStr)
+          s = arg.value.strip
+          if s =~ /\A-?\d+\z/
+            SKNum.new(s.to_i)
+          elsif s =~ /\A-?\d+\.\d+\z/
+            SKNum.new(s.to_f)
+          else
+            raise "parse: not a number: #{s}"
+          end
         else
           raise "Unknown builtin #{name}"
         end

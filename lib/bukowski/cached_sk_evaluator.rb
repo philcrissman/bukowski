@@ -23,7 +23,11 @@ module Bukowski
     # Splits into line-delimited statements, accumulates defines,
     # and wraps each expression in all prior defines.
     # Returns array of results (one per non-define statement).
-    def evaluate_program(source, defines: [])
+    def evaluate_program(source, defines: [], prelude_defines: nil)
+      if prelude_defines
+        defines = prelude_defines.dup + defines
+      end
+
       results = []
 
       each_statement(source) do |stmt|
