@@ -511,4 +511,173 @@ class TestSKReducer < Minitest::Test
     result = @reducer.reduce(expr)
     assert_equal SKNum.new(0), result
   end
+
+  # SKLAZY TESTS
+
+  def test_lazy_is_value
+    lazy = SKLazy.new { SKNum.new(42) }
+    result = @reducer.reduce(lazy)
+    assert_instance_of SKLazy, result
+    refute lazy.forced?
+  end
+
+  def test_lazy_forced_by_addition
+    lazy = SKLazy.new { SKNum.new(10) }
+    expr = SKApp.new(
+      SKApp.new(SKVar.new('+'), lazy),
+      SKNum.new(5)
+    )
+    result = @reducer.reduce(expr)
+    assert_equal SKNum.new(15), result
+    assert lazy.forced?
+  end
+
+  def test_lazy_memoized
+    call_count = 0
+    lazy = SKLazy.new { call_count += 1; SKNum.new(7) }
+    expr1 = SKApp.new(
+      SKApp.new(SKVar.new('+'), lazy),
+      SKNum.new(1)
+    )
+    @reducer.reduce(expr1)
+    assert_equal 1, call_count
+    lazy.force
+    assert_equal 1, call_count
+  end
+
+  def test_lazy_not_forced_by_k
+    forced = false
+    lazy = SKLazy.new { forced = true; SKNum.new(99) }
+    # K 1 <lazy> → 1, lazy should never be forced
+    expr = SKApp.new(
+      SKApp.new(K.new, SKNum.new(1)),
+      lazy
+    )
+    result = @reducer.reduce(expr)
+    assert_equal SKNum.new(1), result
+    refute forced
+  end
+
+  def test_lazy_in_cons_not_forced
+    forced = false
+    lazy = SKLazy.new { forced = true; SKNum.new(42) }
+    expr = SKApp.new(
+      SKApp.new(SKVar.new('cons'), lazy),
+      SKNil.new
+    )
+    result = @reducer.reduce(expr)
+    assert_instance_of SKCons, result
+    refute forced
+  end
+
+  def test_lazy_forced_by_head
+    lazy = SKLazy.new { SKNum.new(42) }
+    cons = SKCons.new(lazy, SKNil.new)
+    expr = SKApp.new(SKVar.new('head'), cons)
+    result = @reducer.reduce(expr)
+    assert_instance_of SKLazy, result
+  end
+
+  def test_lazy_forced_by_comparison
+    lazy = SKLazy.new { SKNum.new(5) }
+    expr = SKApp.new(
+      SKApp.new(SKVar.new('='), lazy),
+      SKNum.new(5)
+    )
+    result = @reducer.reduce(expr)
+    assert_equal K.new, result
+  end
+
+  def test_lazy_tail_only_forced_when_accessed
+    head_forced = false
+    tail_forced = false
+    lazy_head = SKLazy.new { head_forced = true; SKNum.new(1) }
+    lazy_tail = SKLazy.new { tail_forced = true; SKNil.new }
+    cons = SKCons.new(lazy_head, lazy_tail)
+    # isnil should force cons structure but not internal lazy values
+    expr = SKApp.new(SKVar.new('isnil'), cons)
+    result = @reducer.reduce(expr)
+    assert_equal SKApp.new(K.new, I.new), result
+    refute head_forced
+    refute tail_forced
+  end
+
+  def test_nested_lazy
+    inner = SKLazy.new { SKNum.new(3) }
+    outer = SKLazy.new { inner }
+    expr = SKApp.new(
+      SKApp.new(SKVar.new('+'), outer),
+      SKNum.new(4)
+    )
+    result = @reducer.reduce(expr)
+    assert_equal SKNum.new(7), result
+  end
+
+  def test_lazy_string_concat
+    lazy = SKLazy.new { SKStr.new("world") }
+    expr = SKApp.new(
+      SKApp.new(SKVar.new('+'), SKStr.new("hello ")),
+      lazy
+    )
+    result = @reducer.reduce(expr)
+    assert_equal SKStr.new("hello world"), result
+  end
+
+  def test_lazy_length_list
+    lazy_tail = SKLazy.new { SKCons.new(SKNum.new(2), SKNil.new) }
+    list = SKCons.new(SKNum.new(1), lazy_tail)
+    expr = SKApp.new(SKVar.new('length'), list)
+    result = @reducer.reduce(expr)
+    assert_equal SKNum.new(2), result
+    assert lazy_tail.forced?
+  end
+
+  def test_lazy_stream_simulation
+    reads = []
+    lines = ["hello", "world"]
+    idx = 0
+    make_input = -> {
+      if idx < lines.length
+        line = lines[idx]
+        idx += 1
+        lazy_tail = SKLazy.new { make_input.call }
+        reads << line
+        SKCons.new(SKStr.new(line), lazy_tail)
+      else
+        SKNil.new
+      end
+    }
+    input = SKLazy.new { make_input.call }
+    # head input → forces input, gets first cons, returns head
+    expr = SKApp.new(SKVar.new('head'), input)
+    result = @reducer.reduce(expr)
+    assert_equal SKStr.new("hello"), result
+    assert_equal ["hello"], reads
+  end
+
+  def test_lazy_stream_only_forces_needed
+    force_count = 0
+    lines = ["a", "b", "c"]
+    idx = 0
+    make_input = -> {
+      if idx < lines.length
+        line = lines[idx]
+        idx += 1
+        force_count += 1
+        lazy_tail = SKLazy.new { make_input.call }
+        SKCons.new(SKStr.new(line), lazy_tail)
+      else
+        SKNil.new
+      end
+    }
+    input = SKLazy.new { make_input.call }
+    # head (tail input) → should force exactly 2 elements
+    expr = SKApp.new(
+      SKVar.new('head'),
+      SKApp.new(SKVar.new('tail'), input)
+    )
+    result = @reducer.reduce(expr)
+    assert_equal SKStr.new("b"), result
+    assert_equal 2, force_count
+  end
 end

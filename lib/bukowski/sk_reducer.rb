@@ -19,6 +19,9 @@ module Bukowski
         when SKNil, SKCons
           # Lists are values
           expr
+        when SKLazy
+          # Lazy thunks are values — only forced when needed by strict positions
+          expr
         when SKVar
           # Check if it's a Church boolean or 'if'
           case expr.name
@@ -64,19 +67,25 @@ module Bukowski
             # Check if it's a primitive operator
             if ['+', '-', '*', '/', '%', '=', '<', '>', 'cons', 'map', 'fold'].include?(func.name)
               # Primitives are STRICT: reduce arg to get value
-              SKPartialOp.new(func.name, reduce(expr.arg))
+              # cons is strict enough to reduce but does NOT force lazy values
+              reduced = reduce(expr.arg)
+              reduced = force(reduced) unless func.name == 'cons'
+              SKPartialOp.new(func.name, reduced)
             elsif ['length', 'head', 'tail', 'car', 'cdr', 'isnil', 'Y'].include?(func.name)
-              apply_builtin(func.name, reduce(expr.arg))
+              apply_builtin(func.name, force(reduce(expr.arg)))
             else
               # Unknown variable - LAZY: don't reduce arg
               SKApp.new(func, expr.arg)
             end
           when SKPartialOp
             # Primitives are STRICT: reduce second arg
-            apply_primitive(func.op, func.arg, reduce(expr.arg))
+            # cons does NOT force — stores lazy values as-is
+            reduced = reduce(expr.arg)
+            reduced = force(reduced) unless func.op == 'cons'
+            apply_primitive(func.op, func.arg, reduced)
           when SKPartialOp2
             # 3-arg primitives: reduce third arg and apply
-            apply_ternary(func.op, func.arg1, func.arg2, reduce(expr.arg))
+            apply_ternary(func.op, func.arg1, func.arg2, force(reduce(expr.arg)))
           when SKStr
             # String applied to something? Just return as-is (shouldn't happen normally)
             SKApp.new(func, expr.arg)
@@ -90,6 +99,13 @@ module Bukowski
       end
 
       private
+
+      def force(expr)
+        while expr.is_a?(SKLazy)
+          expr = expr.force
+        end
+        expr
+      end
 
       def reduce_application(func, arg)
         # func is an SKApp, check what it contains
@@ -134,6 +150,12 @@ module Bukowski
       end
 
       def apply_primitive(op, a, b)
+        if op == 'cons'
+          return SKCons.new(a, b)
+        end
+
+        a = force(a)
+        b = force(b)
         a_val = extract_value(a)
         b_val = extract_value(b)
 
@@ -154,8 +176,6 @@ module Bukowski
           SKNum.new(a_val / b_val)
         when '%'
           SKNum.new(a_val % b_val)
-        when 'cons'
-          SKCons.new(a, b)
         when 'map'
           apply_map(a, b)
         when 'fold'
@@ -185,6 +205,7 @@ module Bukowski
       end
 
       def apply_builtin(name, arg)
+        arg = force(arg)
         case name
         when 'length'
           case arg
@@ -197,7 +218,7 @@ module Bukowski
             node = arg
             while node.is_a?(SKCons)
               count += 1
-              node = node.tail
+              node = force(node.tail)
             end
             SKNum.new(count)
           else
@@ -226,6 +247,7 @@ module Bukowski
       end
 
       def apply_map(f, lst)
+        lst = force(lst)
         return SKNil.new if lst.is_a?(SKNil)
         raise "map: not a list" unless lst.is_a?(SKCons)
         head = reduce(SKApp.new(f, lst.head))
@@ -243,6 +265,7 @@ module Bukowski
       end
 
       def apply_fold(f, init, lst)
+        lst = force(lst)
         return init if lst.is_a?(SKNil)
         raise "fold: not a list" unless lst.is_a?(SKCons)
         # Right fold: f head (fold f init tail)

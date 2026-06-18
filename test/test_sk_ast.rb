@@ -75,4 +75,38 @@ class TestSKAst < Minitest::Test
     refute_equal K.new, I.new
     refute_equal SKNum.new(5), SKNum.new(6)
   end
+
+  def test_sk_lazy_unforced
+    lazy = SKLazy.new { SKNum.new(42) }
+    refute lazy.forced?
+    assert_equal "<lazy>", lazy.to_s
+    assert_match(/pending/, lazy.inspect)
+  end
+
+  def test_sk_lazy_forced
+    lazy = SKLazy.new { SKNum.new(42) }
+    result = lazy.force
+    assert_equal SKNum.new(42), result
+    assert lazy.forced?
+    assert_equal "42", lazy.to_s
+    assert_match(/forced/, lazy.inspect)
+  end
+
+  def test_sk_lazy_memoized
+    count = 0
+    lazy = SKLazy.new { count += 1; SKNum.new(7) }
+    lazy.force
+    lazy.force
+    lazy.force
+    assert_equal 1, count
+  end
+
+  def test_sk_lazy_equality
+    a = SKLazy.new { SKNum.new(5) }
+    b = SKLazy.new { SKNum.new(5) }
+    refute_equal a, b
+    a.force
+    b.force
+    assert_equal a, b
+  end
 end
