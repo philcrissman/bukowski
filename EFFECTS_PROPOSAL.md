@@ -1,5 +1,21 @@
 # Algebraic Effects and Handlers for Bukowski
 
+> **Status: Thought Experiment (Not Planned)**
+>
+> This proposal was an exploration of how algebraic effects could work in
+> bukowski. After consideration, this direction has been set aside: effects
+> and continuations require a direct evaluator with an explicit call stack,
+> which conflicts with bukowski's core identity as a lazy language evaluated
+> via SKI combinators. The "ski" in bukowski is the point — it's not an
+> implementation detail to be swapped out.
+>
+> IO and side effects will instead be handled via **lazy streams**, following
+> the model used by Miranda and early Haskell: programs are pure functions
+> from input streams to output streams, with the runtime driving the
+> interaction. This keeps everything lazy, pure, and SKI-native.
+>
+> This document is preserved as a design reference and educational resource.
+
 ## Executive Summary
 
 This proposal outlines a design for adding algebraic effects and handlers to bukowski, a lambda calculus-based language with SK combinator evaluation. The design draws from Eff, Koka, and OCaml 5, adapted for bukowski's minimalist, untyped lambda calculus foundation.

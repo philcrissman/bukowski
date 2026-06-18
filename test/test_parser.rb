@@ -1,4 +1,5 @@
 require "minitest/autorun"
+require_relative "../lib/bukowski/tokenizer"
 require_relative "../lib/bukowski/parser"
 
 class TestParser < Minitest::Test
@@ -133,6 +134,60 @@ class TestParser < Minitest::Test
       Var.new('b')
     )
 
+    assert_equal expected, ast
+  end
+
+  def test_lambda_as_argument
+    # f \x.x  →  App(f, Abs(x, x))
+    tokens = [
+      Token.new(:VAR, 'f'),
+      Token.new(:LAM),
+      Token.new(:VAR, 'x'),
+      Token.new(:DOT),
+      Token.new(:VAR, 'x'),
+      Token.new(:EOF)
+    ]
+    ast = Parser.new(tokens).parse
+    assert_equal App.new(Var.new('f'), Abs.new('x', Var.new('x'))), ast
+  end
+
+  def test_lambda_as_final_argument
+    # f a \x.x  →  App(App(f, a), Abs(x, x))
+    tokens = [
+      Token.new(:VAR, 'f'),
+      Token.new(:VAR, 'a'),
+      Token.new(:LAM),
+      Token.new(:VAR, 'x'),
+      Token.new(:DOT),
+      Token.new(:VAR, 'x'),
+      Token.new(:EOF)
+    ]
+    ast = Parser.new(tokens).parse
+    expected = App.new(
+      App.new(Var.new('f'), Var.new('a')),
+      Abs.new('x', Var.new('x'))
+    )
+    assert_equal expected, ast
+  end
+
+  def test_lambda_in_parens_as_argument
+    # f (\x.x) g  →  App(App(f, Abs(x, x)), g)
+    tokens = [
+      Token.new(:VAR, 'f'),
+      Token.new(:LPAREN),
+      Token.new(:LAM),
+      Token.new(:VAR, 'x'),
+      Token.new(:DOT),
+      Token.new(:VAR, 'x'),
+      Token.new(:RPAREN),
+      Token.new(:VAR, 'g'),
+      Token.new(:EOF)
+    ]
+    ast = Parser.new(tokens).parse
+    expected = App.new(
+      App.new(Var.new('f'), Abs.new('x', Var.new('x'))),
+      Var.new('g')
+    )
     assert_equal expected, ast
   end
 end

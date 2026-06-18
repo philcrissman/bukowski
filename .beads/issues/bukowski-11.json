@@ -1,0 +1,12 @@
+{
+  "id": "bukowski-11",
+  "subject": "Stream IO runner for interactive programs",
+  "description": "Add a StreamRunner class that drives bukowski programs as [String] -> [String] functions. The runner represents stdin as a lazy cons list (using SKLazy), applies the program to it, then walks the output cons list, printing each string element as it's produced. Add a --io flag to bin/bukowski to use this mode. See IO_PLAN.md for the full design.",
+  "status": "closed",
+  "priority": 1,
+  "type": "feature",
+  "labels": ["io", "runner"],
+  "created": "2026-06-18T00:00:00Z",
+  "updated": "2026-06-18T00:00:00Z",
+  "blockedBy": ["bukowski-10"]
+}

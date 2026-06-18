@@ -2,7 +2,7 @@
   "id": "bukowski-3",
   "subject": "Support string ordering with < and > operators",
   "description": "The `<` and `>` operators in `apply_operation` (evaluator.rb:128) don't handle Str values. If both operands are Str, `a_val` is a Str struct and Ruby Struct doesn't define `<` or `>`, so this raises a NoMethodError.\n\nNeed to:\n- Extract `.value` from Str operands for comparison\n- Implement lexicographic comparison for strings\n- Return Church booleans (consistent with how numeric comparisons work)\n- Decide behavior for cross-type comparison (e.g., `< \"abc\" 42`)",
-  "status": "open",
+  "status": "closed",
   "priority": 3,
   "type": "feature",
   "labels": ["evaluator", "strings"],

@@ -156,5 +156,40 @@ module Bukowski
         "#<SKPartialOp2 #{op} #{arg1} #{arg2}>"
       end
     end
+
+    # Lazy thunk — wraps a Ruby Proc, forced on demand, memoized
+    class SKLazy
+      attr_reader :thunk
+
+      def initialize(&thunk)
+        @thunk = thunk
+        @forced = false
+        @value = nil
+      end
+
+      def force
+        unless @forced
+          @value = @thunk.call
+          @forced = true
+        end
+        @value
+      end
+
+      def forced?
+        @forced
+      end
+
+      def to_s
+        @forced ? @value.to_s : "<lazy>"
+      end
+
+      def ==(other)
+        other.is_a?(SKLazy) && forced? && other.forced? && @value == other.force
+      end
+
+      def inspect
+        @forced ? "#<SKLazy forced=#{@value.inspect}>" : "#<SKLazy pending>"
+      end
+    end
   end
 end

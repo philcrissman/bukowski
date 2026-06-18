@@ -2,9 +2,10 @@
   "id": "bukowski-6",
   "title": "Implement closures",
   "type": "feature",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
-  "description": "Ensure proper closure semantics — lambdas should capture their enclosing environment. Currently the SK translation may not preserve closure behavior correctly in all cases. This is a prerequisite for effects and handlers.",
+  "description": "Ensure proper closure semantics — lambdas should capture their enclosing environment. SK bracket abstraction handles this correctly via the S combinator, which threads free variables through applications. Verified by integration tests (partial application, Church pairs, nested capture). A direct evaluator with explicit closures was built and then removed — SK translation is the sole evaluation path.",
   "created": "2026-01-29",
-  "labels": ["feature"]
+  "labels": ["feature"],
+  "resolution": "SK bracket abstraction preserves closure semantics. Direct evaluator removed in favor of SK-only evaluation."
 }

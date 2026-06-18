@@ -2,16 +2,21 @@
 require_relative 'tokenizer'
 require_relative 'parser'
 require_relative 'cached_sk_evaluator'
+require_relative 'prelude'
 
 module Bukowski
   class REPL
+    def initialize(no_prelude: false)
+      @no_prelude = no_prelude
+    end
+
     def run
       puts "Bukowski REPL (SK Combinator based)"
       puts "Enter expressions (Ctrl+D to exit)"
       puts
 
       evaluator = CachedSKEvaluator.new
-      defines = []
+      defines = @no_prelude ? [] : Prelude.load_defines(evaluator)
 
       loop do
         buffer = ""

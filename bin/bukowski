@@ -5,20 +5,49 @@ require_relative '../lib/bukowski/tokenizer'
 require_relative '../lib/bukowski/parser'
 require_relative '../lib/bukowski/cached_sk_evaluator'
 require_relative '../lib/bukowski/repl'
+require_relative '../lib/bukowski/stream_runner'
+require_relative '../lib/bukowski/prelude'
 
 module Bukowski
   class Runner
     def self.run(args)
-      if args.empty?
-        # Start REPL
-        REPL.new.run
+      no_prelude = args.delete('--no-prelude')
+      io_mode = args.delete('--io')
+
+      if io_mode
+        if args[0]
+          execute_io(args[0], no_prelude: no_prelude)
+        else
+          $stderr.puts "Error: --io requires a filename"
+          exit 1
+        end
+      elsif args.empty?
+        REPL.new(no_prelude: no_prelude).run
       else
-        # Execute file
-        execute_file(args[0])
+        execute_file(args[0], no_prelude: no_prelude)
       end
     end
 
-    def self.execute_file(filename)
+    def self.execute_io(filename, no_prelude: false)
+      unless File.exist?(filename)
+        $stderr.puts "Error: File '#{filename}' not found"
+        exit 1
+      end
+
+      source = File.read(filename)
+
+      begin
+        runner = StreamRunner.new(no_prelude: no_prelude)
+        runner.run(source)
+        exit(runner.exit_code) if runner.exit_code
+      rescue => e
+        $stderr.puts "Error: #{e.message}"
+        $stderr.puts e.backtrace if ENV['DEBUG']
+        exit 1
+      end
+    end
+
+    def self.execute_file(filename, no_prelude: false)
       unless File.exist?(filename)
         puts "Error: File '#{filename}' not found"
         exit 1
@@ -28,7 +57,8 @@ module Bukowski
 
       begin
         evaluator = CachedSKEvaluator.new
-        results = evaluator.evaluate_program(source)
+        prelude_defines = no_prelude ? nil : Prelude.load_defines(evaluator)
+        results = evaluator.evaluate_program(source, prelude_defines: prelude_defines)
 
         if results.empty?
           exit 0
