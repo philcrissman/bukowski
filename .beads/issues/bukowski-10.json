@@ -1,0 +1,11 @@
+{
+  "id": "bukowski-10",
+  "subject": "Add SKLazy node and lazy forcing to SK reducer",
+  "description": "Add an SKLazy node type that wraps a Ruby thunk (Proc). When the reducer encounters an SKLazy in a position where it needs a value (e.g., argument to a strict primitive, head of a cons being printed), it forces the thunk and continues reducing. This is the foundation for lazy stream IO — the input stream is a cons list whose elements are SKLazy thunks that read from stdin on demand.",
+  "status": "open",
+  "priority": 1,
+  "type": "feature",
+  "labels": ["evaluator", "io", "lazy"],
+  "created": "2026-06-18T00:00:00Z",
+  "updated": "2026-06-18T00:00:00Z"
+}

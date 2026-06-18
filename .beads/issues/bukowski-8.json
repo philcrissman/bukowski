@@ -2,10 +2,11 @@
   "id": "bukowski-8",
   "title": "Implement algebraic effects and handlers",
   "type": "feature",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "description": "Add algebraic effects and handlers for structured side effects including IO. This is the intended approach for all side effects in bukowski rather than monads or direct IO primitives. Requires continuations as a foundation.",
   "created": "2026-01-29",
   "labels": ["feature"],
-  "blockedBy": ["bukowski-7"]
+  "blockedBy": ["bukowski-7"],
+  "resolution": "wontfix — algebraic effects require continuations and a direct evaluator, which conflicts with bukowski's core design: lazy evaluation via SKI combinators. See EFFECTS_PROPOSAL.md for the design exploration. IO will be handled via lazy streams instead."
 }
