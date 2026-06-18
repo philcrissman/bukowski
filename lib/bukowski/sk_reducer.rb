@@ -5,6 +5,10 @@ require_relative 'sk_ast'
 module Bukowski
   module SK
     class Reducer
+      def initialize(lazy_cons: false)
+        @lazy_cons = lazy_cons
+      end
+
       def reduce(expr)
         case expr
         when S, K, I
@@ -78,11 +82,13 @@ module Bukowski
               SKApp.new(func, expr.arg)
             end
           when SKPartialOp
-            # Primitives are STRICT: reduce second arg
-            # cons does NOT force — stores lazy values as-is
-            reduced = reduce(expr.arg)
-            reduced = force(reduced) unless func.op == 'cons'
-            apply_primitive(func.op, func.arg, reduced)
+            if func.op == 'cons' && @lazy_cons
+              apply_primitive('cons', func.arg, expr.arg)
+            else
+              reduced = reduce(expr.arg)
+              reduced = force(reduced) unless func.op == 'cons'
+              apply_primitive(func.op, func.arg, reduced)
+            end
           when SKPartialOp2
             # 3-arg primitives: reduce third arg and apply
             apply_ternary(func.op, func.arg1, func.arg2, force(reduce(expr.arg)))
@@ -218,7 +224,7 @@ module Bukowski
             node = arg
             while node.is_a?(SKCons)
               count += 1
-              node = force(node.tail)
+              node = reduce(force(node.tail))
             end
             SKNum.new(count)
           else
@@ -247,7 +253,7 @@ module Bukowski
       end
 
       def apply_map(f, lst)
-        lst = force(lst)
+        lst = reduce(force(lst))
         return SKNil.new if lst.is_a?(SKNil)
         raise "map: not a list" unless lst.is_a?(SKCons)
         head = reduce(SKApp.new(f, lst.head))
@@ -265,7 +271,7 @@ module Bukowski
       end
 
       def apply_fold(f, init, lst)
-        lst = force(lst)
+        lst = reduce(force(lst))
         return init if lst.is_a?(SKNil)
         raise "fold: not a list" unless lst.is_a?(SKCons)
         # Right fold: f head (fold f init tail)

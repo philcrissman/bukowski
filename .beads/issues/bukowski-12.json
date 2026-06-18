@@ -2,7 +2,7 @@
   "id": "bukowski-12",
   "subject": "Request/response IO protocol",
   "description": "Extend the stream IO model with a tagged request/response protocol. Instead of plain strings, the output list contains tagged pairs like {Print msg}, {Read}, {ReadFile path}, {WriteFile path contents}, {Exit code}. The runtime pattern-matches on the tag, performs the side effect, and feeds the response into the input stream. This enables file IO and structured interaction while keeping the bukowski program pure. See IO_PLAN.md Phase 2.",
-  "status": "open",
+  "status": "closed",
   "priority": 2,
   "type": "feature",
   "labels": ["io"],

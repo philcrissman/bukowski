@@ -31,7 +31,9 @@ module Bukowski
       source = File.read(filename)
 
       begin
-        StreamRunner.new.run(source)
+        runner = StreamRunner.new
+        runner.run(source)
+        exit(runner.exit_code) if runner.exit_code
       rescue => e
         $stderr.puts "Error: #{e.message}"
         $stderr.puts e.backtrace if ENV['DEBUG']
