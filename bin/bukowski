@@ -5,16 +5,37 @@ require_relative '../lib/bukowski/tokenizer'
 require_relative '../lib/bukowski/parser'
 require_relative '../lib/bukowski/cached_sk_evaluator'
 require_relative '../lib/bukowski/repl'
+require_relative '../lib/bukowski/stream_runner'
 
 module Bukowski
   class Runner
     def self.run(args)
       if args.empty?
-        # Start REPL
         REPL.new.run
+      elsif args[0] == '--io' && args[1]
+        execute_io(args[1])
+      elsif args[0] == '--io'
+        $stderr.puts "Error: --io requires a filename"
+        exit 1
       else
-        # Execute file
         execute_file(args[0])
+      end
+    end
+
+    def self.execute_io(filename)
+      unless File.exist?(filename)
+        $stderr.puts "Error: File '#{filename}' not found"
+        exit 1
+      end
+
+      source = File.read(filename)
+
+      begin
+        StreamRunner.new.run(source)
+      rescue => e
+        $stderr.puts "Error: #{e.message}"
+        $stderr.puts e.backtrace if ENV['DEBUG']
+        exit 1
       end
     end
 
