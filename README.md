@@ -2,6 +2,27 @@
 
 Bukowski is a lambda-calculus interpreter written in Ruby. It converts labmda-calculus to SKI combinators and then executes the SKI combinators.
 
+## How it works
+
+Source code is tokenized and parsed into a lambda-calculus AST, compiled to
+S/K/I combinators via bracket abstraction, and then reduced lazily to a
+normal-form value:
+
+```mermaid
+flowchart LR
+    A["Source<br/>code"] --> B[Tokenizer]
+    B --> C[Parser]
+    C --> D["Lambda-calculus<br/>AST"]
+    D --> E["SK Translator<br/>(bracket abstraction)"]
+    E --> F["SK combinators<br/>S K I"]
+    F --> G["SK Reducer<br/>(lazy)"]
+    G --> H["Normal-form<br/>value"]
+    H --> I["REPL output<br/>/ Stream IO"]
+```
+
+For a stage-by-stage tour with the implementing files, see
+[WALKTHROUGH.md](WALKTHROUGH.md).
+
 ## Installation
 
 TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.

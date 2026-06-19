@@ -47,6 +47,84 @@ Every expression goes through every stage. There is no interpreter that
 directly evaluates the lambda calculus AST — the only evaluator is the
 SK reducer.
 
+### Architecture in detail
+
+The diagram below maps each stage to the file that implements it, and
+shows the desugaring, prelude loading, translation cache, and the two
+output paths (REPL pretty-printing vs. stream IO).
+
+```mermaid
+flowchart TD
+    SRC["Source code<br/>.bk file or REPL line"]
+
+    subgraph entry["Entry points — bin/bukowski (Runner)"]
+        direction LR
+        REPL["REPL<br/><i>repl.rb</i>"]
+        EVALFILE["execute_file<br/>CachedSKEvaluator"]
+        EVALIO["execute_io (--io)<br/>StreamRunner"]
+    end
+
+    SRC --> entry
+
+    subgraph front["Front end — per statement"]
+        TOK["Tokenizer<br/><i>tokenizer.rb</i>"]
+        TOKS["Token stream<br/>LAM DOT VAR NUM STR OP LPAREN LBRACE ..."]
+        PARSE["Parser<br/><i>parser.rb</i>"]
+        AST["Lambda-calculus AST<br/>Var Num Str Abs App Define"]
+        TOK --> TOKS --> PARSE --> AST
+    end
+
+    entry --> TOK
+
+    subgraph desugar["Desugaring — inside the Parser"]
+        LET["let x = v in b<br/>→ (λx.b) v"]
+        LIST["{a b c}<br/>→ cons a (cons b (cons c nil))"]
+        DEF["define name v<br/>→ collected, then wrap_defines around body"]
+    end
+    PARSE -.-> desugar
+
+    PRELUDE["Prelude — <i>prelude.bk</i><br/>22 definitions, loaded as defines<br/>(id, compose, filter, map-helpers, ...)"]
+    PRELUDE -. "prepended as defines" .-> AST
+
+    AST --> CACHE
+
+    subgraph compile["Compile to combinators"]
+        CACHE["CachedSKEvaluator<br/>translation_cache (AST → SK)<br/><i>cached_sk_evaluator.rb</i>"]
+        TRANS["SK::Translator<br/>bracket abstraction T[λx.E]<br/><i>sk_translator.rb</i>"]
+        SKAST["SK combinator AST<br/>S K I SKApp SKVar SKNum SKStr SKNil SKCons"]
+        CACHE -->|miss| TRANS --> SKAST
+        CACHE -->|hit| SKAST
+    end
+
+    SKAST --> RED
+
+    subgraph eval["Evaluate — lazy normal-order reduction"]
+        RED["SK::Reducer<br/><i>sk_reducer.rb</i>"]
+        PRIM["Strict primitives<br/>+ - * / % = &lt; &gt; cons map fold"]
+        BUILT["Builtins<br/>head tail car cdr length isnil Y show parse"]
+        LAZY["SKLazy thunks<br/>forced on demand, memoized"]
+        RED --- PRIM
+        RED --- BUILT
+        RED --- LAZY
+    end
+
+    RED --> NF["Normal-form value<br/>SKNum · SKStr · SKCons/SKNil ·<br/>K (true) · K I (false)"]
+
+    subgraph out["Output"]
+        PRETTY["REPL pretty-print<br/>Church-boolean detection → => value"]
+        STREAM["StreamRunner<br/>lazy input stream + output walk<br/><i>stream_runner.rb</i>"]
+        IOPROTO["Tagged request/response protocol<br/>Print · Read · ReadFile · WriteFile · Exit"]
+        STREAM --- IOPROTO
+    end
+
+    NF --> PRETTY
+    NF --> STREAM
+
+    REPL -. drives .-> PRETTY
+    EVALFILE -. drives .-> PRETTY
+    EVALIO -. drives .-> STREAM
+```
+
 ---
 
 ## 2. The Language
